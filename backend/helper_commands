@@ -1,0 +1,10 @@
+#general pythonic stuff
+pipenv/Scripts/activate                --> to activate the virtual environment for pythoon aka. venv
+pip freeze > requirements.txt          --> to freeze the requirements into requirements.txt file, after that you just execute pip install requirements.txt and all the dependencies are isntalled
+
+#database related stuff
+$env:FLASK_APP = "run.py"             --> export flask in terminal for "flask shell" usage:  
+flask db init                          --> creates the database 
+flask db migrate -m "add user table"   --> creates a migration 
+flask db upgrade                       --> makes use of the current revision, updates the database with th emigration 
+
