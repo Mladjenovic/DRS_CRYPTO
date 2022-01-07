@@ -1,0 +1,24 @@
+main {
+  min-height: 80vh;
+}
+
+h3 {
+  padding: 1 rem;
+}
+
+.header {
+  display: flex;
+}
+
+.header h1 {
+  flex-grow: 1;
+}
+
+.header button {
+  margin-left: 20px;
+}
+
+.special_modal .modal-content {
+  background-color: #000;
+  color: #fff;
+}
