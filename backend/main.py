@@ -1,15 +1,21 @@
 import os
 import uuid
-from flask_restx import fields, Resource, Namespace, Api
+from models import db
 from flask_cors import CORS
 from config import DevConfig
-from flask import Flask, request, jsonify, make_response, abort
-from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from models import Account, User
+from flask_jwt_extended import JWTManager
+from flask_restx import fields, Resource, Namespace, Api
+from flask import Flask, request, jsonify, make_response, abort
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db
-
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    create_refresh_token,
+    jwt_required,
+    get_jwt_identity
+    )
 
 app = Flask(__name__)
 app.config.from_object(DevConfig)
@@ -29,8 +35,6 @@ api.add_namespace(auth_ns)
 
 # serializers
 
-
-
 signup_model = auth_ns.model(
     'SignUp', 
     {
@@ -43,6 +47,41 @@ signup_model = auth_ns.model(
         "city":fields.String(),
         "country":fields.String(),
         "phone":fields.String()
+    }
+)
+
+login_model = auth_ns.model(
+    'Login', {
+        'email':fields.String(),
+        'password':fields.String(),
+    }
+)
+
+user_edit_model = auth_ns.model(
+    'User', 
+    {
+        "password":fields.String(),
+        "firstname":fields.String(),
+        "lastname":fields.String(),
+        "address":fields.String(),
+        "city":fields.String(),
+        "country":fields.String(),
+        "phone":fields.String()
+    }
+)
+
+user_model = auth_ns.model(
+    'User', 
+    {
+        "username":fields.String(),
+        "email":fields.String(),
+        "firstname":fields.String(),
+        "lastname":fields.String(),
+        "address":fields.String(),
+        "city":fields.String(),
+        "country":fields.String(),
+        "phone":fields.String(),
+        "isActive":fields.String()
     }
 )
 
@@ -88,6 +127,49 @@ class SigunUp(Resource):
         account.save()
         
         return jsonify({"message": f"User created successfully"})
+
+@auth_ns.route('/login')
+class Login(Resource):
+    @auth_ns.expect(login_model)
+    def post(self):
+        data = request.get_json()
+
+        email = data.get('email')
+        password = data.get('password')
+
+        db_user = User.query.filter_by(email=email).first()
+        
+        if db_user and check_password_hash(db_user.password, password):
+            access_token = create_access_token(identity=db_user.email)
+            refresh_token = create_refresh_token(identity=db_user.email)
+        else:
+            return make_response(jsonify({"message": "Invalid email or password"}), 401)
+
+        return jsonify({"access_token": access_token, "refresh_token":refresh_token, "userData": {
+            "username":db_user.username,
+            "email":db_user.email,
+            "firstname":db_user.firstname,
+            "lastname":db_user.lastname,
+            "address":db_user.address,
+            "city":db_user.city,
+            "country":db_user.country,
+            "phone":db_user.phone,
+            "isActive":db_user.isActive
+        }})
+
+
+@auth_ns.route('/refresh')
+class RefreshResource(Resource):
+    @jwt_required(refresh=True)    
+    def post(self):
+        current_user = get_jwt_identity()
+        new_access_token = create_access_token(identity=current_user)
+        return make_response(jsonify({"access_token": new_access_token}), 200)
+
+
+
+
+
 
 
 @app.route("/", methods=['POST','GET'])
