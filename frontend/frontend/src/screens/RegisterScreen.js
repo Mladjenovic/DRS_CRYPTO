@@ -1,6 +1,12 @@
+import { useState, UseEffect } from "react";
 import { Form, Input, Button } from "antd";
 
+import Message from "../components/Message";
+
 function RegisterScreen() {
+  const [error, setError] = useState(false);
+  const [message, setMessage] = useState("");
+  const [variant, setVariant] = useState("");
   const onSubmit = (values) => {
     const body = {
       username: values.username,
@@ -28,14 +34,30 @@ function RegisterScreen() {
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
+        setVariant("success");
+        setMessage(data.message);
+        if (data.message.includes("already exists")) {
+          setMessage(data.message);
+          setError(true);
+          setVariant("danger");
+        }
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log("Error: " + err);
+      });
   };
   return (
     <div>
       <h1 style={{ width: "20%", margin: "auto" }}>Register User:</h1>
       <br />
       <br />
+      {error ? (
+        <>
+          <Message variant={variant} children={message}></Message>
+        </>
+      ) : (
+        <></>
+      )}
       <Form
         name="wrap"
         labelCol={{
@@ -150,7 +172,7 @@ function RegisterScreen() {
             },
           ]}
         >
-          <Input />
+          <Input.Password />
         </Form.Item>
 
         <Form.Item label=" ">

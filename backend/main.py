@@ -1,10 +1,9 @@
 import os
 import uuid
-from flask import Flask
 from flask_restx import fields, Resource, Namespace, Api
 from flask_cors import CORS
 from config import DevConfig
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, abort
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from models import Account, User
@@ -60,10 +59,10 @@ class SigunUp(Resource):
         db_email = User.query.filter_by(email=email).first()
 
         if db_user is not None:
-            return jsonify({"message": f"User with username {username} already exists"})
+            return make_response({"message": f"User with username {username} already exists"}, 400)
 
         if db_email is not None:
-            return jsonify({"message": f"User with email {email} already exists"})
+            return abort(400, f"User with email {email} already exists")
 
         new_user = User(
             username = data.get('username'),
