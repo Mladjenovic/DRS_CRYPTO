@@ -13,6 +13,7 @@ import {
 import HomeScreen from "../screens/HomeScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
+import ProfileSettingsScreen from "../screens/ProfileSettingsScreen";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -46,12 +47,24 @@ function CustomLayout() {
           <Menu.Item key="1" icon={<HomeOutlined />}>
             <Link to="/">Home</Link>
           </Menu.Item>
-          <Menu.Item key="2" icon={<LoginOutlined />}>
-            <Link to="/login/">Login</Link>
-          </Menu.Item>
-          <Menu.Item key="3" icon={<UserAddOutlined />}>
-            <Link to="/register/">Register</Link>
-          </Menu.Item>
+          {userData ? (
+            <></>
+          ) : (
+            <>
+              <Menu.Item key="2" icon={<LoginOutlined />}>
+                <Link to="/login/">Login</Link>
+              </Menu.Item>
+            </>
+          )}
+          {userData ? (
+            <></>
+          ) : (
+            <>
+              <Menu.Item key="3" icon={<UserAddOutlined />}>
+                <Link to="/register/">Register</Link>
+              </Menu.Item>
+            </>
+          )}
           {userData ? (
             <>
               <Menu.Item key="4" icon={<UserAddOutlined />}>
@@ -95,6 +108,11 @@ function CustomLayout() {
                 exact
                 path="/register"
                 element={<RegisterScreen />}
+              ></Route>
+              <Route
+                exact
+                path="/profile-settings/"
+                element={<ProfileSettingsScreen />}
               ></Route>
             </Routes>
           </div>

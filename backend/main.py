@@ -167,7 +167,34 @@ class RefreshResource(Resource):
         return make_response(jsonify({"access_token": new_access_token}), 200)
 
 
-
+@auth_ns.route('/edit-user')
+class UserResource(Resource):
+    @jwt_required()
+    @auth_ns.marshal_with(user_model)
+    def get(self):
+        current_user = get_jwt_identity()
+        print(current_user)
+        user = User.query.filter_by(email = current_user).first()
+        return user
+    
+    @jwt_required()
+    @auth_ns.expect(user_edit_model)
+    def put(self):
+        data = request.get_json()
+        current_user = get_jwt_identity()
+        user = User.query.filter_by(email = current_user).first()
+        
+        user.update(
+            generate_password_hash(data.get('password')),
+            data.get('lastname'),
+            data.get('firstname'),
+            data.get('address'),
+            data.get('city'),
+            data.get('country'),
+            data.get('phone'),
+            )
+        
+        return jsonify({"message": f"User updated successfully"})
 
 
 
