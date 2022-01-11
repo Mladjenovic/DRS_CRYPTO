@@ -8,12 +8,14 @@ import {
   HomeOutlined,
   LoginOutlined,
   LogoutOutlined,
+  LineChartOutlined,
 } from "@ant-design/icons";
 
 import HomeScreen from "../screens/HomeScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import ProfileSettingsScreen from "../screens/ProfileSettingsScreen";
+import AccountScreen from "../screens/AccountScreen";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -80,9 +82,15 @@ function CustomLayout() {
                 <a href="/login" onClick={logoutHandler}>
                   Logout
                 </a>
-                {/* <Link to="/login/" onCLick={() => logoutHandler}>
-                  Logout
-                </Link> */}
+              </Menu.Item>
+            </>
+          ) : (
+            <></>
+          )}
+          {userData ? (
+            <>
+              <Menu.Item key="6" icon={<LineChartOutlined />}>
+                <Link to="/account/"> Account</Link>
               </Menu.Item>
             </>
           ) : (
@@ -114,6 +122,7 @@ function CustomLayout() {
                 path="/profile-settings/"
                 element={<ProfileSettingsScreen />}
               ></Route>
+              <Route exact path="/account/" element={<AccountScreen />}></Route>
             </Routes>
           </div>
         </Content>

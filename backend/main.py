@@ -196,7 +196,25 @@ class UserResource(Resource):
         
         return jsonify({"message": f"User updated successfully"})
 
+@auth_ns.route('/account-balance')
+class AccountBalance(Resource):
+    @jwt_required()
+    def get(self):
+        current_user = get_jwt_identity()
+        user = User.query.filter_by(email = current_user).first()
+        accounts = Account.query.filter_by(user_id = user.id)
 
+        retVal = []
+
+        for account in accounts:
+            account_data = {}
+            account_data['id'] = account.id
+            account_data['balance'] = account.balance
+            account_data['currency'] = account.currency
+            account_data['user_id'] = account.user_id
+            retVal.append(account_data)
+
+        return jsonify({"accounts":retVal})
 
 
 @app.route("/", methods=['POST','GET'])
