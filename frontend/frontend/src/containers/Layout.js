@@ -20,6 +20,7 @@ import ProfileSettingsScreen from "../screens/ProfileSettingsScreen";
 import AccountScreen from "../screens/AccountScreen";
 import InserMoneyScreen from "../screens/InserMoneyScreen";
 import ActivateUserScreen from "../screens/ActivateUserScreen";
+import TransactionScreen from "../screens/TransactionScreen";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -112,7 +113,16 @@ function CustomLayout() {
           {userData && !userData.isActive ? (
             <>
               <Menu.Item key="8" icon={<UserSwitchOutlined />}>
-                <Link to="/activete-user/"> Activate</Link>
+                <Link to="/activete-user/"> Verify user</Link>
+              </Menu.Item>
+            </>
+          ) : (
+            <></>
+          )}
+          {userData ? (
+            <>
+              <Menu.Item key="9" icon={<PlusCircleOutlined />}>
+                <Link to="/transaction/"> Transaction</Link>
               </Menu.Item>
             </>
           ) : (
@@ -154,6 +164,11 @@ function CustomLayout() {
                 exact
                 path="/activete-user/"
                 element={<ActivateUserScreen />}
+              ></Route>
+              <Route
+                exact
+                path="/transaction/"
+                element={<TransactionScreen />}
               ></Route>
             </Routes>
           </div>

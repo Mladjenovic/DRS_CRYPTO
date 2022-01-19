@@ -43,7 +43,7 @@ function RegisterScreen() {
           setError(true);
           setVariant("danger");
         }
-        navigate("/");
+        navigate("/login");
       })
       .catch((err) => {
         console.log("Error: " + err);

@@ -1,11 +1,14 @@
 import os
 import uuid
+import random
 from models import db
+from Crypto.Hash import keccak
+import binascii
 from decimal import *
 from flask_cors import CORS
 from config import DevConfig
 from flask_migrate import Migrate
-from models import Account, User
+from models import Account, User, Transaction, TransactionState
 from flask_jwt_extended import JWTManager
 from flask_restx import fields, Resource, Namespace, Api
 from flask import Flask, request, jsonify, make_response, abort
@@ -38,6 +41,9 @@ auth_ns = Namespace('auth', description='Authhentication namespace')
 transaction_ns = Namespace('transaction', description='Transactions namespace')
 api.add_namespace(auth_ns)
 api.add_namespace(transaction_ns)
+
+with app.app_context():
+        db.create_all()
     
 
 # serializers
@@ -107,6 +113,16 @@ verify_user_model = auth_ns.model(
         'name': fields.String(),
         'expired_date': fields.String(),
         'secure_code': fields.String()
+    }
+)
+
+# transaction serializers
+
+transfer_money_model = transaction_ns.model(
+    'TransferMoney', {
+        'amount': fields.String(),
+        'account_id': fields.String(),
+        'to_user_email':fields.String()
     }
 )
 
@@ -182,7 +198,6 @@ class Login(Resource):
             "isActive":db_user.isActive
         }})
 
-
 @auth_ns.route('/refresh')
 class RefreshResource(Resource):
     @jwt_required(refresh=True)    
@@ -190,7 +205,6 @@ class RefreshResource(Resource):
         current_user = get_jwt_identity()
         new_access_token = create_access_token(identity=current_user)
         return make_response(jsonify({"access_token": new_access_token}), 200)
-
 
 @auth_ns.route('/edit-user')
 class UserResource(Resource):
@@ -272,10 +286,13 @@ class VerifyUser(Resource):
 
 
 
+
+
+
 # Transactions 
 
 @transaction_ns.route('/insert-money')
-class PayMoney(Resource):
+class InsertMoney(Resource):
     @jwt_required()
     @transaction_ns.expect(insert_money_model)
     def post(self):
@@ -292,13 +309,88 @@ class PayMoney(Resource):
         account.AddToBalance(amount)
 
         return jsonify({"message": f"Money successfully inserted into your account!"})
+    
+
+@transaction_ns.route('/transfer-money')
+class TransferMoney(Resource):
+    @jwt_required()
+    @transaction_ns.expect(transfer_money_model)
+    def post(self):
+        request_data = request.get_json()
+        current_user = get_jwt_identity()   
+        from_user = User.query.filter_by(email = current_user).first()
+        
+        if(from_user.isActive == False):
+            return jsonify({"message": f"You must activate user!"})
+
+        to_user = User.query.filter_by(email = request_data['to_user_email']).first()
+
+        if to_user is None:
+            return jsonify({"message": f"Unable to transfer money. No such user."})
+
+        accountFrom = Account.query.filter_by(user_id=from_user.id, id=request_data['account_id']).first()
+
+        if accountFrom is None:
+            return jsonify({"message": f"Unable to transfer money. Unable to find account with given account id"})
+
+        accountTo = Account.query.filter_by(user_id=to_user.id, currency=accountFrom.currency).first()
+
+        amount = Decimal(request_data['amount'])
+
+        if((accountFrom.balance - amount) < 0):
+            return jsonify({"message": f"Not enough money to trasner money."})
+        
+        if accountTo is None:
+            accountTo = Account(
+                            id = str(uuid.uuid4()),
+                            user_id = to_user.id,
+                            balance=0,
+                            currency=accountFrom.currency,
+                            )
+            accountTo.save()
+        
+
+        accountFrom.AddToBalance(-amount)
+        accountTo.AddToBalance(amount)
+        
+        keccak_data = f"{from_user.id}|{to_user.id}|{amount}|{random.randint(0, 1000)}"
+        keccak256 = keccak.new(data=str.encode(keccak_data), digest_bits=256).digest()
+        keccac_byte = binascii.hexlify(keccak256)
+        keccak_string = keccac_byte.decode()
+        transaction = Transaction(
+            amount = amount,
+            from_user = from_user.id,
+            to_user = to_user.id,
+            currency = accountFrom.currency,
+            transaction_hash = keccak_string,
+            transaction_state = TransactionState.PROCESSED
+        )
+
+        transaction.save()
+
+        return jsonify({"message": f"Money successfully transfered!"})
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 
 @transaction_ns.route('/exchange-rate')
-class PayMoney(Resource):
+class ExchangeRate(Resource):
     def get(self):
         exchange_rates = get_crypto_exchange_rate()[:20]
         return jsonify({"exchange_rate": exchange_rates})

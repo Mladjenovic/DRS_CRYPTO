@@ -2,20 +2,18 @@ import React, { useState, useEffect } from "react";
 import { Box, Flex } from "rebass";
 import { Form, Button } from "react-bootstrap";
 
-function InserMoneyScreen() {
-  const [userAccounts, setUserAccounts] = useState([]);
-  const [accountCurrency, setAccountCurrency] = useState("");
+function TransactionScreen() {
   const token = localStorage.getItem("REACT_TOKEN_AUTH_KEY");
+  const [userAccounts, setUserAccounts] = useState([]);
 
-  const handleInsertMoney = (event) => {
+  const handleTransaction = (event) => {
     event.preventDefault();
+    console.log("handle trans entered");
 
     const body = {
-      name: event.target.elements.name.value,
-      account_id: event.target.elements.account_id.value,
-      expire_date: event.target.elements.expire_date.value,
-      secure_code: event.target.elements.secure_code.value,
       amount: event.target.elements.amount.value,
+      account_id: event.target.elements.account_id.value,
+      to_user_email: event.target.elements.to_user_email.value,
     };
     console.log(body);
 
@@ -28,7 +26,7 @@ function InserMoneyScreen() {
       body: JSON.stringify(body),
     };
 
-    fetch("http://localhost:5000/transaction/insert-money", requestOptions)
+    fetch("http://localhost:5000/transaction/transfer-money", requestOptions)
       .then((res) => res.json())
       .then((data) => {
         alert(data.message);
@@ -52,7 +50,7 @@ function InserMoneyScreen() {
   }, []);
 
   return (
-    <div>
+    <>
       <Box
         sx={{
           maxWidth: 768,
@@ -61,7 +59,7 @@ function InserMoneyScreen() {
           py: 4,
         }}
       >
-        <Form onSubmit={handleInsertMoney}>
+        <Form onSubmit={handleTransaction}>
           <Form.Group className="mb-3">
             <Form.Label htmlFor="account_id">Account</Form.Label>
             <Form.Select id="account_id">
@@ -73,27 +71,15 @@ function InserMoneyScreen() {
             </Form.Select>
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label htmlFor="name">Name</Form.Label>
-            <Form.Control id="name" placeholder="Name" required />
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label htmlFor="expire_date">Expire Date</Form.Label>
+            <Form.Label htmlFor="to_user_email">Email</Form.Label>
             <Form.Control
-              id="expire_date"
-              placeholder="Expire Date"
+              id="to_user_email"
+              placeholder="Email"
               required
-              type="date"
+              type="email"
             />
           </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label htmlFor="secure_code">Secure code</Form.Label>
-            <Form.Control
-              id="secure_code"
-              placeholder="Secure code"
-              required
-              type="number"
-            />
-          </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label htmlFor="amount">Amount</Form.Label>
             <Form.Control
@@ -106,8 +92,8 @@ function InserMoneyScreen() {
           <Button type="submit">Submit</Button>
         </Form>
       </Box>
-    </div>
+    </>
   );
 }
 
-export default InserMoneyScreen;
+export default TransactionScreen;

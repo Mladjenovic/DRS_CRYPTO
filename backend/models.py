@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
-
 db=SQLAlchemy()
+
+from enum import Enum
 
 #User model 
 
@@ -76,4 +77,25 @@ class Account(db.Model):
 
     def AddToBalance(self, amount):
         self.balance = self.balance + amount
+        db.session.commit()
+
+
+
+class TransactionState(Enum):
+    PROCESSING = 1
+    PROCESSED = 2
+    REJECTED = 3
+
+
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Numeric, nullable=False)
+    from_user = db.Column(db.Integer, db.ForeignKey(User.id))
+    to_user = db.Column(db.Integer, db.ForeignKey(User.id))
+    currency = db.Column(db.String(3), nullable=False)
+    transaction_hash = db.Column(db.String(), nullable=False)
+    transaction_state = db.Column(db.Enum(TransactionState))
+
+    def save(self):
+        db.session.add(self)
         db.session.commit()
