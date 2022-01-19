@@ -7,8 +7,6 @@ function ActivateUserScreen() {
   const token = localStorage.getItem("REACT_TOKEN_AUTH_KEY");
   const navigate = useNavigate();
 
-  const [exchange_rate, setExchangeRate] = useState([]);
-
   const handleActivateUser = (event) => {
     event.preventDefault();
     const body = {

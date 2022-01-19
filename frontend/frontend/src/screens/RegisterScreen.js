@@ -1,9 +1,11 @@
 import { useState, UseEffect } from "react";
 import { Form, Input, Button } from "antd";
+import { Link, useNavigate } from "react-router-dom";
 
 import Message from "../components/Message";
 
 function RegisterScreen() {
+  const navigate = useNavigate();
   const [error, setError] = useState(false);
   const [message, setMessage] = useState("");
   const [variant, setVariant] = useState("");
@@ -41,6 +43,7 @@ function RegisterScreen() {
           setError(true);
           setVariant("danger");
         }
+        navigate("/");
       })
       .catch((err) => {
         console.log("Error: " + err);
