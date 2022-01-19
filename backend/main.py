@@ -1,6 +1,7 @@
 import os
 import uuid
 from models import db
+from decimal import *
 from flask_cors import CORS
 from config import DevConfig
 from flask_migrate import Migrate
@@ -17,6 +18,10 @@ from flask_jwt_extended import (
     get_jwt_identity
     )
 
+from coin_marcet_cap import get_crypto_exchange_rate
+
+
+
 app = Flask(__name__)
 app.config.from_object(DevConfig)
 
@@ -30,7 +35,9 @@ JWTManager(app)
 api = Api(app, doc='/docs')
 
 auth_ns = Namespace('auth', description='Authhentication namespace')
+transaction_ns = Namespace('transaction', description='Transactions namespace')
 api.add_namespace(auth_ns)
+api.add_namespace(transaction_ns)
     
 
 # serializers
@@ -82,6 +89,24 @@ user_model = auth_ns.model(
         "country":fields.String(),
         "phone":fields.String(),
         "isActive":fields.String()
+    }
+)
+
+insert_money_model = transaction_ns.model(
+    'InsertMoney', {
+        'name': fields.String(),
+        'account_id': fields.String(),
+        'expired_date': fields.String(),
+        'secure_code': fields.String(),
+        'amount': fields.String()
+    }
+)
+verify_user_model = auth_ns.model(
+    'VerifyUser', {
+        'card_number': fields.String(),
+        'name': fields.String(),
+        'expired_date': fields.String(),
+        'secure_code': fields.String()
     }
 )
 
@@ -215,6 +240,72 @@ class AccountBalance(Resource):
             retVal.append(account_data)
 
         return jsonify({"accounts":retVal})
+
+@auth_ns.route('/verify-user')
+class VerifyUser(Resource):
+    @jwt_required()    
+    @auth_ns.expect(verify_user_model)
+    def post(self):
+        card = request.get_json()
+
+        current_user = get_jwt_identity()
+        user = User.query.filter_by(email = current_user).first()
+
+        if(user.isActive == True):
+            return jsonify({'message' : 'User already activated.'})  
+
+        user_account = Account.query.filter_by(user_id=user.id).first()
+        user_account.AddToBalance(-1)
+        user.activate()
+
+        return jsonify({'message' : 'User successfully activated.'})     
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Transactions 
+
+@transaction_ns.route('/insert-money')
+class PayMoney(Resource):
+    @jwt_required()
+    @transaction_ns.expect(insert_money_model)
+    def post(self):
+        data = request.get_json()
+
+        current_user = get_jwt_identity()
+        user = User.query.filter_by(email = current_user).first()
+
+        if(user.isActive == False):
+            return jsonify({"message": f"User needs to be active for this operaton!"})
+
+        account = Account.query.filter_by(user_id=user.id, currency='RSD').first()
+        amount = Decimal(data['amount'])
+        account.AddToBalance(amount)
+
+        return jsonify({"message": f"Money successfully inserted into your account!"})
+
+
+
+
+
+@transaction_ns.route('/exchange-rate')
+class PayMoney(Resource):
+    def get(self):
+        exchange_rates = get_crypto_exchange_rate()[:20]
+        return jsonify({"exchange_rate": exchange_rates})
+
+
+
+
 
 
 @app.route("/", methods=['POST','GET'])

@@ -49,12 +49,16 @@ function AccountScreen() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>{accountBalance.accounts[0].id}</td>
-                <td>{accountBalance.accounts[0].balance}</td>
-                <td>{accountBalance.accounts[0].currency}</td>
-                <td>{accountBalance.accounts[0].user_id}</td>
-              </tr>
+              {accountBalance.accounts.map((account, i) => {
+                return [
+                  <tr key={i}>
+                    <td>{account.id}</td>
+                    <td>{account.balance}</td>
+                    <td>{account.currency}</td>
+                    <td>{account.user_id}</td>
+                  </tr>,
+                ];
+              })}
             </tbody>
           </Table>
         </>

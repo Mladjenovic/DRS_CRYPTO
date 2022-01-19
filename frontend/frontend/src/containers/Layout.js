@@ -9,6 +9,8 @@ import {
   LoginOutlined,
   LogoutOutlined,
   LineChartOutlined,
+  PlusCircleOutlined,
+  UserSwitchOutlined,
 } from "@ant-design/icons";
 
 import HomeScreen from "../screens/HomeScreen";
@@ -16,6 +18,8 @@ import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import ProfileSettingsScreen from "../screens/ProfileSettingsScreen";
 import AccountScreen from "../screens/AccountScreen";
+import InserMoneyScreen from "../screens/InserMoneyScreen";
+import ActivateUserScreen from "../screens/ActivateUserScreen";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -35,7 +39,7 @@ function CustomLayout() {
 
   useEffect(() => {
     try {
-      setUserData(localStorage.getItem("userData"));
+      setUserData(JSON.parse(localStorage.getItem("userData")));
     } catch {
       console.log("User is not yet logged in!");
     }
@@ -96,6 +100,24 @@ function CustomLayout() {
           ) : (
             <></>
           )}
+          {userData ? (
+            <>
+              <Menu.Item key="7" icon={<PlusCircleOutlined />}>
+                <Link to="/insert-money/"> Insert money</Link>
+              </Menu.Item>
+            </>
+          ) : (
+            <></>
+          )}
+          {userData && !userData.isActive ? (
+            <>
+              <Menu.Item key="8" icon={<UserSwitchOutlined />}>
+                <Link to="/activete-user/"> Activate</Link>
+              </Menu.Item>
+            </>
+          ) : (
+            <></>
+          )}
         </Menu>
       </Sider>
       <Layout className="site-layout">
@@ -123,6 +145,16 @@ function CustomLayout() {
                 element={<ProfileSettingsScreen />}
               ></Route>
               <Route exact path="/account/" element={<AccountScreen />}></Route>
+              <Route
+                exact
+                path="/insert-money/"
+                element={<InserMoneyScreen />}
+              ></Route>
+              <Route
+                exact
+                path="/activete-user/"
+                element={<ActivateUserScreen />}
+              ></Route>
             </Routes>
           </div>
         </Content>
