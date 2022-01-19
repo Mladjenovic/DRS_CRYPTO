@@ -43,20 +43,7 @@ function ActivateUserScreen() {
       });
   };
 
-  useEffect(() => {
-    const requestOptions = {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-      },
-    };
-
-    fetch("http://localhost:5000/transaction/exchange-rate", requestOptions)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-      });
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <div>

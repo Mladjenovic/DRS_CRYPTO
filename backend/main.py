@@ -146,7 +146,7 @@ class SigunUp(Resource):
             id = str(uuid.uuid4()),
             user_id = user.id,
             balance=0,
-            currency="RSD",
+            currency="USD",
         )
         
         account.save()
@@ -287,7 +287,7 @@ class PayMoney(Resource):
         if(user.isActive == False):
             return jsonify({"message": f"User needs to be active for this operaton!"})
 
-        account = Account.query.filter_by(user_id=user.id, currency='RSD').first()
+        account = Account.query.filter_by(user_id=user.id, currency='USD').first()
         amount = Decimal(data['amount'])
         account.AddToBalance(amount)
 
