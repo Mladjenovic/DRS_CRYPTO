@@ -1,6 +1,8 @@
 import os
 import uuid
 import random
+import threading
+import time
 from models import db
 from Crypto.Hash import keccak
 import binascii
@@ -125,6 +127,8 @@ transfer_money_model = transaction_ns.model(
         'to_user_email':fields.String()
     }
 )
+
+
 
 @auth_ns.route('/signup')
 class SigunUp(Resource):
@@ -310,6 +314,45 @@ class InsertMoney(Resource):
 
         return jsonify({"message": f"Money successfully inserted into your account!"})
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+def thread_function(amount,from_user_id, to_user_id, currency, keccak_string, accountFrom, accountTo):
+    with app.app_context():
+        transaction = Transaction(
+            amount = amount,
+            from_user = from_user_id,
+            to_user = to_user_id,
+            currency = currency,
+            transaction_hash = keccak_string,
+            transaction_state = TransactionState.PROCESSING
+        )
+        
+        if((accountFrom.balance - amount) < 0):
+            transaction.transaction_state = TransactionState.REJECTED
+            transaction.save()
+            print("\n\nTransaction rejected\n\n")
+            return
+
+        accountFrom.AddToBalance(-amount)
+        accountTo.AddToBalance(amount)
+        
+
+        transaction.save()
+        time.sleep(2)
+        transaction.transaction_state = TransactionState.PROCESSED
+        transaction.save()
+    
+    
 
 @transaction_ns.route('/transfer-money')
 class TransferMoney(Resource):
@@ -336,9 +379,6 @@ class TransferMoney(Resource):
         accountTo = Account.query.filter_by(user_id=to_user.id, currency=accountFrom.currency).first()
 
         amount = Decimal(request_data['amount'])
-
-        if((accountFrom.balance - amount) < 0):
-            return jsonify({"message": f"Not enough money to trasner money."})
         
         if accountTo is None:
             accountTo = Account(
@@ -348,27 +388,19 @@ class TransferMoney(Resource):
                             currency=accountFrom.currency,
                             )
             accountTo.save()
-        
-
-        accountFrom.AddToBalance(-amount)
-        accountTo.AddToBalance(amount)
+            
         
         keccak_data = f"{from_user.id}|{to_user.id}|{amount}|{random.randint(0, 1000)}"
         keccak256 = keccak.new(data=str.encode(keccak_data), digest_bits=256).digest()
         keccac_byte = binascii.hexlify(keccak256)
         keccak_string = keccac_byte.decode()
-        transaction = Transaction(
-            amount = amount,
-            from_user = from_user.id,
-            to_user = to_user.id,
-            currency = accountFrom.currency,
-            transaction_hash = keccak_string,
-            transaction_state = TransactionState.PROCESSED
-        )
 
-        transaction.save()
+        x = threading.Thread(target=thread_function, args=(amount,from_user.id, to_user.id, accountFrom.currency, keccak_string, accountFrom, accountTo))
+        x.start()
+        
+        
 
-        return jsonify({"message": f"Money successfully transfered!"})
+        return jsonify({"message": f"Money transfer initiated!"})
     
 
 

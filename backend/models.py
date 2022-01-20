@@ -77,6 +77,7 @@ class Account(db.Model):
 
     def AddToBalance(self, amount):
         self.balance = self.balance + amount
+        db.session.add(self)
         db.session.commit()
 
 
