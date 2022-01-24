@@ -32,3 +32,62 @@ def get_crypto_exchange_rate():
         
     except (ConnectionError, Timeout, TooManyRedirects) as e:
         print(e)
+        
+        
+def get_available_exchange_valutes():
+    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
+    parameters = {
+    'start':'1',
+    'limit':'50',
+    'convert':'USD'
+    }
+    headers = {
+    'Accepts': 'application/json',
+    'X-CMC_PRO_API_KEY': '4c8ded23-3fbc-4dde-86f0-9b93f51e268a',
+    }
+
+    session = Session()
+    session.headers.update(headers)
+
+    try:
+        response = session.get(url, params=parameters)
+        data = json.loads(response.text)
+        retval = []
+        for data in data.get('data'):
+            symbol = data.get('symbol')
+            retval.append(symbol)
+
+        return retval
+        
+    except (ConnectionError, Timeout, TooManyRedirects) as e:
+        print(e)
+        
+def get_retes_dictionay():
+    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
+    parameters = {
+    'start':'1',
+    'limit':'50',
+    'convert':'USD'
+    }
+    headers = {
+    'Accepts': 'application/json',
+    'X-CMC_PRO_API_KEY': '4c8ded23-3fbc-4dde-86f0-9b93f51e268a',
+    }
+
+    session = Session()
+    session.headers.update(headers)
+
+    try:
+        response = session.get(url, params=parameters)
+        data = json.loads(response.text)
+        retval = {}
+        for data in data.get('data'):
+            symbol = data.get('symbol')
+            price = data.get('quote').get('USD').get('price')
+            retval[symbol] = price 
+            # retval.append(symbol)
+
+        return retval
+        
+    except (ConnectionError, Timeout, TooManyRedirects) as e:
+        print(e)

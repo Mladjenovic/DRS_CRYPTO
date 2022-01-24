@@ -96,7 +96,20 @@ class Transaction(db.Model):
     currency = db.Column(db.String(3), nullable=False)
     transaction_hash = db.Column(db.String(), nullable=False)
     transaction_state = db.Column(db.Enum(TransactionState))
+    transaction_date = db.Column(db.String())
 
     def save(self):
         db.session.add(self)
         db.session.commit()
+        
+    def serialize(self):
+        return {
+            "id":self.id,
+            "amount":self.amount,
+            "from_user":self.from_user,
+            "to_user":self.to_user, 
+            "currency":self.currency,
+            "transaction_hash": self.transaction_hash,
+            "transaction_state":str(self.transaction_state),
+            "transaction_date":self.transaction_date
+            }

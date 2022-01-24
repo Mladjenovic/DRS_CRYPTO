@@ -21,6 +21,8 @@ import AccountScreen from "../screens/AccountScreen";
 import InserMoneyScreen from "../screens/InserMoneyScreen";
 import ActivateUserScreen from "../screens/ActivateUserScreen";
 import TransactionScreen from "../screens/TransactionScreen";
+import TransactionsScreen from "../screens/TransactionsScreen";
+import ExchangeScreen from "../screens/ExchangeScreen";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -122,7 +124,25 @@ function CustomLayout() {
           {userData ? (
             <>
               <Menu.Item key="9" icon={<PlusCircleOutlined />}>
-                <Link to="/transaction/"> Transaction</Link>
+                <Link to="/transaction/"> New transaction</Link>
+              </Menu.Item>
+            </>
+          ) : (
+            <></>
+          )}
+          {userData ? (
+            <>
+              <Menu.Item key="10" icon={<PlusCircleOutlined />}>
+                <Link to="/transactions/"> Transactions</Link>
+              </Menu.Item>
+            </>
+          ) : (
+            <></>
+          )}
+          {userData ? (
+            <>
+              <Menu.Item key="11" icon={<PlusCircleOutlined />}>
+                <Link to="/exchange/"> Exchange</Link>
               </Menu.Item>
             </>
           ) : (
@@ -169,6 +189,16 @@ function CustomLayout() {
                 exact
                 path="/transaction/"
                 element={<TransactionScreen />}
+              ></Route>
+              <Route
+                exact
+                path="/transactions/"
+                element={<TransactionsScreen />}
+              ></Route>
+              <Route
+                exact
+                path="/exchange/"
+                element={<ExchangeScreen />}
               ></Route>
             </Routes>
           </div>

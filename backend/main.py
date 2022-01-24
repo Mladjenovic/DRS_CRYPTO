@@ -5,6 +5,7 @@ import threading
 import time
 from models import db
 from Crypto.Hash import keccak
+from datetime import datetime
 import binascii
 from decimal import *
 from flask_cors import CORS
@@ -23,7 +24,7 @@ from flask_jwt_extended import (
     get_jwt_identity
     )
 
-from coin_marcet_cap import get_crypto_exchange_rate
+from coin_marcet_cap import get_crypto_exchange_rate, get_available_exchange_valutes, get_retes_dictionay
 
 
 
@@ -128,6 +129,15 @@ transfer_money_model = transaction_ns.model(
     }
 )
 
+exchange_model = transaction_ns.model(
+    'Exchange', {
+        'amount': fields.String(),
+        'old_currency':fields.String(),
+        'account_id': fields.String(),
+        'coin_name': fields.String(),
+        'coin_value': fields.String(),
+    }
+)
 
 
 @auth_ns.route('/signup')
@@ -308,33 +318,46 @@ class InsertMoney(Resource):
         if(user.isActive == False):
             return jsonify({"message": f"User needs to be active for this operaton!"})
 
-        account = Account.query.filter_by(user_id=user.id, currency='USD').first()
+        account = Account.query.filter_by(user_id=user.id, id=data['account_id']).first()
+        if account is None:
+            return jsonify({"message": f"No such account found!"})
+            
         amount = Decimal(data['amount'])
         account.AddToBalance(amount)
 
         return jsonify({"message": f"Money successfully inserted into your account!"})
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+@transaction_ns.route('/get-transactions')
+class GetTransactions(Resource):
+    @jwt_required()
+    def get(self):
+        current_user = get_jwt_identity()
+        user = User.query.filter_by(email = current_user).first()
+
+        from_user_transactions = Transaction.query.filter(Transaction.from_user == user.id).all()
+        to_user_transactions = Transaction.query.filter(Transaction.to_user == user.id).all()
+        
+        from_user = [transaction.serialize() for transaction in from_user_transactions]
+        to_user = [transaction.serialize() for transaction in to_user_transactions]
+        
+        return jsonify({"from_user": from_user, "to_user": to_user})
+        
+   
     
 def thread_function(amount,from_user_id, to_user_id, currency, keccak_string, accountFrom, accountTo):
     with app.app_context():
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+
         transaction = Transaction(
             amount = amount,
             from_user = from_user_id,
             to_user = to_user_id,
             currency = currency,
             transaction_hash = keccak_string,
-            transaction_state = TransactionState.PROCESSING
+            transaction_state = TransactionState.PROCESSING,
+            transaction_date = dt_string
         )
         
         if((accountFrom.balance - amount) < 0):
@@ -348,11 +371,12 @@ def thread_function(amount,from_user_id, to_user_id, currency, keccak_string, ac
         
 
         transaction.save()
-        time.sleep(2)
+        print(datetime.now().time())
+        time.sleep(5*60)
+        print(datetime.now().time())
         transaction.transaction_state = TransactionState.PROCESSED
         transaction.save()
-    
-    
+
 
 @transaction_ns.route('/transfer-money')
 class TransferMoney(Resource):
@@ -401,6 +425,62 @@ class TransferMoney(Resource):
         
 
         return jsonify({"message": f"Money transfer initiated!"})
+    
+
+@transaction_ns.route('/exchange')
+class Exchange(Resource):
+    @jwt_required()
+    @transaction_ns.expect(exchange_model)
+    def post(self):
+        data = request.get_json()
+
+
+        current_user = get_jwt_identity()
+        user = User.query.filter_by(email = current_user).first()
+
+        if(user.isActive == False):
+            return jsonify({"message": f"User needs to be active for this operaton!"})
+
+        account = Account.query.filter_by(user_id=user.id, currency=f"{data['old_currency']}").first()
+        if account is None:
+            return jsonify({"message": f"The account you try to send money from doesn't exist!"})
+        
+        exchange_rates = get_crypto_exchange_rate()[:20]
+        available_exchange_rates = get_available_exchange_valutes()
+        rates_dictionary = get_retes_dictionay()
+        old_currency = data['old_currency']
+        
+        if (data['old_currency'] in available_exchange_rates):
+            old_currency_rate = Decimal(rates_dictionary[data['old_currency']]) # transfered into dolars
+        else:
+            old_currency_rate = 1
+            
+        
+        coin_name =  data['coin_name']
+        # print(exchange_rates)
+        amount = Decimal(data['amount'])
+        
+        accountTo = Account.query.filter_by(user_id=user.id, currency=coin_name).first()
+
+        if accountTo is None:
+            accountTo = Account(
+                            id = str(uuid.uuid4()),
+                            user_id = user.id,
+                            balance=0,
+                            currency=coin_name,
+                            )
+            
+        new_currency_rate = Decimal(data['coin_value']) # transfered into dolars
+        
+                        # in dolars                     # in dolars
+        if ((account.balance * old_currency_rate) - (amount * new_currency_rate) < 0):
+            return jsonify({"message": f"You don't have enough money"})
+        
+        account.AddToBalance(-((amount * new_currency_rate)/old_currency_rate))
+        
+        accountTo.AddToBalance(amount)
+
+        return jsonify({"message": f"Exchange initiated!"})
     
 
 

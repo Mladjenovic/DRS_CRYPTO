@@ -32,7 +32,8 @@ function InserMoneyScreen() {
       .then((res) => res.json())
       .then((data) => {
         alert(data.message);
-      });
+      })
+      .catch((err) => console.log(err));
   };
 
   useEffect(() => {
