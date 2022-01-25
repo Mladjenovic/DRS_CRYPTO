@@ -32,6 +32,13 @@ function ExchangeScreen() {
 
     var coin_value = document.getElementById("coin_name").value;
 
+    console.log("type of amount", typeof amount);
+    console.log("amonunt value", amount);
+    if (amount === "" || amount == undefined) {
+      alert("Amont can't be empty");
+      return;
+    }
+
     const body = {
       amount: amount,
       account_id: account_id,

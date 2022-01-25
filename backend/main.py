@@ -2,6 +2,7 @@ import os
 import uuid
 import random
 import threading
+import multiprocessing
 import time
 from models import db
 from Crypto.Hash import keccak
@@ -426,6 +427,31 @@ class TransferMoney(Resource):
 
         return jsonify({"message": f"Money transfer initiated!"})
     
+    
+    
+
+#process function 
+
+def process_function(new_currency_rate, account, accountTo, user_id, coin_name, old_currency_rate, amount):
+    with app.app_context():
+        print(new_currency_rate)
+        
+        if accountTo is None:
+            accountTo = Account(
+                            id = str(uuid.uuid4()),
+                            user_id = user_id,
+                            balance=0,
+                            currency=coin_name,
+                            )
+            
+        #                 # in dolars                     # in dolars
+        if ((account.balance * old_currency_rate) - (amount * new_currency_rate) < 0):
+            return jsonify({"message": f"You don't have enough money"})
+        
+        account.AddToBalance(-((amount * new_currency_rate)/old_currency_rate))
+        
+        accountTo.AddToBalance(amount)    
+    
 
 @transaction_ns.route('/exchange')
 class Exchange(Resource):
@@ -462,23 +488,18 @@ class Exchange(Resource):
         
         accountTo = Account.query.filter_by(user_id=user.id, currency=coin_name).first()
 
-        if accountTo is None:
-            accountTo = Account(
-                            id = str(uuid.uuid4()),
-                            user_id = user.id,
-                            balance=0,
-                            currency=coin_name,
-                            )
+       
             
         new_currency_rate = Decimal(data['coin_value']) # transfered into dolars
         
-                        # in dolars                     # in dolars
-        if ((account.balance * old_currency_rate) - (amount * new_currency_rate) < 0):
-            return jsonify({"message": f"You don't have enough money"})
         
-        account.AddToBalance(-((amount * new_currency_rate)/old_currency_rate))
+        process = multiprocessing.Process(target=process_function, args=(new_currency_rate, account, accountTo, user.id, coin_name, old_currency_rate, amount))
+        process.start()
         
-        accountTo.AddToBalance(amount)
+        time.sleep(3)
+        
+        process.terminate()
+
 
         return jsonify({"message": f"Exchange initiated!"})
     
